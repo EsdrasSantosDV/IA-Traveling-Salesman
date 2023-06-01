@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-cities = [0, 1, 2, 3, 4]
+supermercados = [0, 1, 2, 3, 4]
 
 adjacency_mat = np.asarray(
     [
@@ -98,15 +98,15 @@ class Population():
 
 
 
-def init_population(cities, adjacency_mat, n_population):
+def init_population(supermercados, adjacency_mat, n_population):
     return Population(
-        np.asarray([np.random.permutation(cities) for _ in range(n_population)]),
+        np.asarray([np.random.permutation(supermercados) for _ in range(n_population)]),
         adjacency_mat
     )
 
 
 def genetic_algorithm(
-        cities,
+        supermercados,
         adjacency_mat,
         n_population=5,
         n_iter=20,
@@ -117,7 +117,7 @@ def genetic_algorithm(
         return_history=False,
         verbose=False,
 ):
-    pop = init_population(cities, adjacency_mat, n_population)
+    pop = init_population(supermercados, adjacency_mat, n_population)
     best = pop.best
     score = float("inf")
     history = []
@@ -137,4 +137,4 @@ def genetic_algorithm(
         return best, history
     return best
 
-genetic_algorithm(cities, adjacency_mat, verbose=True)
+genetic_algorithm(supermercados, adjacency_mat, verbose=True)
