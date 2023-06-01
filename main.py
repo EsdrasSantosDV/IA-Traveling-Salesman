@@ -1,16 +1,30 @@
-# This is a sample Python script.
+import pandas as pd
+import numpy as np
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Ler o arquivo Excel
+df = pd.read_excel('distancias.xlsx')
+
+# Retirar o nome das cidades do dataframe
+cidades = df.columns[1:]
+
+# Convertendo o DataFrame em uma matriz de distâncias
+distancias = df.values[:,1:].astype(float)
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+# Convertendo a lista de listas em uma matriz NumPy para visualização mais fácil
+distancias_np = np.array(distancias)
+
+print(distancias_np)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+
+
+
+
+
+
+
+
+
