@@ -13,6 +13,7 @@ cidades = df.columns[1:]
 distancias = df.values[:,1:].astype(float)
 
 
+# Convertendo a lista de listas em uma matriz NumPy para visualização mais fácil
 distancias_np = np.array(distancias)
 
 supermercados = [0, 1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
@@ -63,6 +64,7 @@ def print_route_with_distances(route):
         distance = adjacency_mat[route[i]][route[i + 1]]
         total_distance += distance
         print(f"Distancia do supermercado {cidades[route[i]]}  pro supermercado {cidades[route[i+1]]}: {distance}")
+
     print(f"Total distance: {total_distance}")
 
 result = genetic_algorithm(supermercados, 50, 1000, 0.05)
