@@ -15,18 +15,18 @@ import pandas as pd
 from copy import deepcopy
 
 
+## CARREGAMENTO DOS DADOS, ONDE TEMOAS AS COLUNAS QUE REPRESENTAM OS SUPERMERCADOS, E A LISTA DE IDENTIFICADORES DE CADA SUPERMERCADO
 df = pd.read_excel('distancias.xlsx')
-
-
-cidades = df.columns[1:]
-
-
+supermercados_excel = df.columns[1:]
 distancias = df.values[:,1:].astype(float)
-
-
 supermercados = [0, 1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
 
 
+
+##CRIAÇÃO DE INDIVIDUOS E  DA POPULAÇÃO
+#UM INDIVIDUO NESSE CONTEXTO E UMA POSSIVEL ROTA QUE O CAIXEIRO VIAJANTE PODE SEGUIR
+# REPRESENTADA POR UMA LISTA EMBARALHADA DAS DISTANCIAS
+#ENTRE OS SUPERMERCADOS
 def create_individual():
     df = pd.read_excel('distancias.xlsx')
     distancias = df.values[:, 1:].astype(float)
@@ -34,21 +34,31 @@ def create_individual():
     np.random.shuffle(distancias_np)
     return deepcopy(distancias_np)
 
-
+#POPULAÇÃO E SIMPLESMENTE O CONJUNTO DESSAS ROTAS
 def create_population(population_size):
     return [create_individual() for _ in range(population_size)]
 
 
+#O FITNESS E UMA MEDIDA DE QUÃO BOA E UMA DETERMINADA ROTA, NESSE CASO
+# E CALCULADA COMO A SOMA DAS DISTANCIAS ENTRE SUPERMERCADOS CONSECUTIVOS NA ROTA, E REALIZADA UMA FUNÇÃO DE APTIDÃO
+#ENTÃO QUANTO MENOR A DISTANCIA MAIOR SERA A PONTUÇÃO DE FITNESS
 def fitness(individual):
     km_percorrido = 0
     for i in range(len(individual) - 1):
         index_of = np.where(individual[i + 1] == 0)[0][0]
         km_percorrido += individual[i][index_of]
 
-    return 4000 - (km_percorrido * 5)
+    return 1000 - (km_percorrido * 10)
 
 
 
+#Essa função realiza a seleção dos indivíduos da população
+# para serem pais da próxima geração.
+# Ela utiliza o método da roleta, que envolve a criação de
+# uma roleta de probabilidades ponderada pelo fitness de cada indivíduo.
+# Isso significa que indivíduos com fitness
+# maior têm mais chances de serem selecionados para a próxima geração.
+# A função gera um número aleatório entre 0 e 1 e seleciona o indivíduo correspondente na roleta
 def select_roulette(population, fitnesses, num_parents):
     total_fitness = sum(fitnesses)
     probs = [f / total_fitness for f in fitnesses]
@@ -56,7 +66,7 @@ def select_roulette(population, fitnesses, num_parents):
     parents = []
 
     for _ in range(num_parents):
-        r = random.random()  # Gera um número aleatório entre 0 e 1
+        r = random.random()
         for i, individual in enumerate(population):
             r -= probs[i]
             if r <= 0:
@@ -65,7 +75,11 @@ def select_roulette(population, fitnesses, num_parents):
 
     return parents
 
-
+#Esta função também realiza a seleção de pais, mas usa o método de torneio.
+# Isso significa que um número especificado de indivíduos (tamanho do torneio)
+# é selecionado aleatoriamente da população,
+# e o indivíduo com o maior fitness desses é selecionado como pai.
+# Isso é repetido até que o número necessário de pais seja selecionado.
 def select_tournament(population, fitnesses, num_parents, tournament_size):
     parents = []
 
@@ -80,6 +94,8 @@ def select_tournament(population, fitnesses, num_parents, tournament_size):
 
 
 
+#FIZEMOS O OX CROSSOVER ONDE ELA SELECIONA UMA SUBSEÇÃO DE CADA PAI E
+# TROCA ESSAS SEÇOES ENTRE OS PAIS PARA CIRAR DOIS NOVOS INDIVIUDOS
 def ox_crossover(parent1, parent2, crossover_rate):
     should_cross = random.random()
     if should_cross < crossover_rate:
@@ -107,7 +123,10 @@ def ox_crossover(parent1, parent2, crossover_rate):
         return parent1, parent2
 
 
-
+#A MUTAÇÃO E USADA PARA ADICIONAR ALGUMA ALEATORIEDADE A POPULAÇÃO PRA EVITAR QUE O ALGORITMO FIQUE PRESO EM UM MAXIMO LOCAL
+#ELA PERCORRE CADA ELEMENTO DO INDIVIDUO, COM UMA PROBABILIDADE IGUAL A TAXA DE MUTAÇÃO.
+#TROCANDO A POSIÇÃO DESSE ELEMENTO COM OUTRO ELEMENTO ALEATORIO
+#NESSE CASO ELE PERCORREU OS 22 SUPERMERCADOS E TROCOU A POSIÇÃO ALEATORIAMENTE
 def mutate(individual, mutation_rate):
     individual_copy = deepcopy(individual)
     for _ in range(22):
@@ -118,59 +137,83 @@ def mutate(individual, mutation_rate):
             individual_copy[[j_chosen1, j_chosen2]] = individual_copy[[j_chosen2, j_chosen1]]
     return deepcopy(individual_copy)
 
+#AQUI A GENTE TEM O REPLACE POPULATION, ONDE ELA SUBSTITUI OS PIORES INDIVUDOS DA
+# GERAÇÃO ATUAL PELOS NOVOS INDIVIDUOS CRIADOS A PARTIR DO CRUZAMENTO E MUTAÇÃO
 def replace_population(population, new_individuals):
     population.sort(key=fitness)
     population[:len(new_individuals)] = deepcopy(new_individuals)
 
     return deepcopy(population)
 
+# Função para calcular a distância a partir do valor de fitness.
 def calculate_distance(fitness):
-    return (-1 * fitness + 4000) / 5
+    return (-1 * fitness + 1000) / 10
 
 
 def genetic_algorithm(population_size,num_generations,mutacao_probabilidade,tamanho_elitismo,probabilidade_de_cruzamento,selection_method,tamanho_torneio=None,):
+    # Criação inicial da população.
     population = create_population(population_size)
+
+    # Carregar distâncias a partir de um arquivo Excel.
     df = pd.read_excel('distancias.xlsx')
     global distancias
     distancias = df.values[:, 1:].astype(float)
     distancias = np.array(distancias)
+
+    # Inicializar melhor fitness e a geração em que foi encontrado.
     geracaoencontrada = 0
     best_fitness = 0
+
+    # Loop principal do algoritmo genético, repetido por um número definido de gerações.
     for gen in range(num_generations):
+
+        # Cálculo da aptidão (fitness) para cada indivíduo na população.
         fitnesses = [fitness(individual) for individual in population]
 
+        # Seleção dos pais para a próxima geração
         if selection_method == "tournament":
             parents = select_tournament(population, fitnesses, population_size // 2, tamanho_torneio)
         else:
             parents = select_roulette(population, fitnesses, population_size // 2)
 
+        # Criação de filhos a partir dos pais usando cruzamento.
         children = []
         for i in range(0, len(parents) - 1, 2):
             child1, child2 = ox_crossover(parents[i], parents[i + 1], probabilidade_de_cruzamento)
             children.append(child1)
             children.append(child2)
+
+        # Se o elitismo está sendo usado, os melhores indivíduos são copiados.
         if (tamanho_elitismo > 0):
             population.sort(key=fitness, reverse=True)
             elites = deepcopy(population[:tamanho_elitismo])
+
+        # Mutação é aplicada aos filhos.
         mutated_children = [mutate(child, mutacao_probabilidade) for child in children]
+        # Substituição da população atual pelos filhos mutados.
         population = replace_population(population, mutated_children)
 
+        # Se o elitismo está sendo usado, os piores indivíduos são substituídos pelos elites.
         if (tamanho_elitismo > 0):
             population.sort(key=fitness)
             population[:tamanho_elitismo] = deepcopy(elites)
+
+        # Recalcular a aptidão da população.
         statistic_fitness = [fitness(individual) for individual in population]
 
         if (tamanho_elitismo > 0):
             fitness(elites[0])
 
+        # Se a melhor aptidão encontrada nesta geração é melhor do que a melhor até agora, atualizar best_fitness e geracaoencontrada.
         if max(statistic_fitness) > best_fitness:
             geracaoencontrada = gen
             best_fitness = max(statistic_fitness)
-        # print('Geração: ', gen + 1, 'Fitness: ', max(statistic_fitness), 'Melhor Geração: ', geracaoencontrada + 1,
-        #       'Distância total: ', calculate_distance(max(statistic_fitness)))
 
+    # Após todas as gerações terem sido processadas, exibir os resultados.
+    # Calculando e exibindo a melhor distância encontrada.
     melhor_geracao.config(text=f"Geração em que foi encontrado a melhor geração: {geracaoencontrada+1}")
     melhor_distancia.config(text=f"Melhor Distancia Encontrada: { calculate_distance(max(statistic_fitness))}")
+    # Encontrar o melhor indivíduo da última geração.
     best_individual = max(population, key=fitness)
 
 
@@ -180,10 +223,10 @@ def genetic_algorithm(population_size,num_generations,mutacao_probabilidade,tama
 
     for i in range(len(best_individual) - 1):
         index_of = np.where(best_individual[i + 1] == 0)[0][0]
-        grande_array[i][0]=cidades[np.where(best_individual[i] == 0)[0][0]]
-        grande_array[i][1] = cidades[index_of]
+        grande_array[i][0]=supermercados_excel[np.where(best_individual[i] == 0)[0][0]]
+        grande_array[i][1] = supermercados_excel[index_of]
         grande_array[i][2]=best_individual[i][index_of]
-        print(f"Distancia do supermercado {cidades[np.where(best_individual[i] == 0)[0][0]]}  pro supermercado {cidades[index_of]}: distancia {best_individual[i][index_of]}")
+        print(f"Distancia do supermercado {supermercados_excel[np.where(best_individual[i] == 0)[0][0]]}  pro supermercado {supermercados_excel[index_of]}: distancia {best_individual[i][index_of]}")
         km_percorrido += best_individual[i][index_of]
 
     print(grande_array)
@@ -234,15 +277,15 @@ def submit_button_event():
 
 def fill_form():
     form_tamanho_da_populacao.delete(0, tkinter.END)
-    form_tamanho_da_populacao.insert(0, str(100))
+    form_tamanho_da_populacao.insert(0, str(210))
     form_probabilidade_de_cruzamento.delete(0, tkinter.END)
     form_probabilidade_de_cruzamento.insert(0, str(0.85))
     form_mutacao_probabilidade.delete(0, tkinter.END)
-    form_mutacao_probabilidade.insert(0, str(0.5))
+    form_mutacao_probabilidade.insert(0, str(0.05))
     form_quantidade_geracoes.delete(0, tkinter.END)
-    form_quantidade_geracoes.insert(0, str(100))
+    form_quantidade_geracoes.insert(0, str(300))
     form_tamanho_torneio.delete(0, tkinter.END)
-    form_tamanho_torneio.insert(0, str(15))
+    form_tamanho_torneio.insert(0, str(8))
     form_tamanho_elitismo.delete(0, tkinter.END)
     form_tamanho_elitismo.insert(0, str(3))
 

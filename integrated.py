@@ -15,7 +15,7 @@ GENERATION_NUMBER = 100
 ELITISM_LEN = 1
 IS_TOURNAMENT = True
 TOURNAMENT_SIZE = 5
-cidades = []
+supermercados_excel = []
 CROSSOVER_TYPE = 'ox'
 
 

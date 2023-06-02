@@ -4,8 +4,8 @@ import numpy as np
 # Ler o arquivo Excel
 df = pd.read_excel('distancias.xlsx')
 
-# Retirar o nome das cidades do dataframe
-cidades = df.columns[1:]
+# Retirar o nome das supermercados_excel do dataframe
+supermercados_excel = df.columns[1:]
 
 # Convertendo o DataFrame em uma matriz de distâncias
 distancias = df.values[:,1:].astype(float)

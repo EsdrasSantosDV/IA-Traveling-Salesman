@@ -7,7 +7,7 @@ import pandas as pd
 df = pd.read_excel('distancias.xlsx')
 
 
-cidades = df.columns[1:]
+supermercados_excel = df.columns[1:]
 
 
 distancias = df.values[:,1:].astype(float)
@@ -63,7 +63,7 @@ def print_route_with_distances(route):
     for i in range(len(route) - 1):
         distance = adjacency_mat[route[i]][route[i + 1]]
         total_distance += distance
-        print(f"Distancia do supermercado {cidades[route[i]]}  pro supermercado {cidades[route[i+1]]}: {distance}")
+        print(f"Distancia do supermercado {supermercados_excel[route[i]]}  pro supermercado {supermercados_excel[route[i+1]]}: {distance}")
 
     print(f"Total distance: {total_distance}")
 
